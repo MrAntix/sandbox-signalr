@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.AspNet.SignalR;
@@ -34,7 +35,7 @@ namespace Sandbox.SignalR.Portal
 
             WriteLine("SetUser");
         }
-
+        
         public override Task OnConnected()
         {
             WriteLine("Connected");
@@ -65,21 +66,30 @@ namespace Sandbox.SignalR.Portal
 
         void WriteLine(string text)
         {
-            using (var file = new StreamWriter(@"C:\temp\hub.txt", true))
+            try
             {
-                ChatUser current;
-                var name = ChatUser.New.Name;
-                if (Users.TryGetValue(Context.ConnectionId, out current))
-                {
-                    name = current.Name;
-                }
 
-                file.WriteLine(
-                    "{0} ({1}): {2}",
-                    name,
-                    Context.ConnectionId,
-                    text
-                    );
+                using (var file = new StreamWriter(@"C:\temp\hub.txt", true))
+                {
+                    ChatUser current;
+                    var name = ChatUser.New.Name;
+                    if (Users.TryGetValue(Context.ConnectionId, out current))
+                    {
+                        name = current.Name;
+                    }
+
+                    file.WriteLine(
+                        "{0} ({1}): {2}",
+                        name,
+                        Context.ConnectionId,
+                        text
+                        );
+                }
+            }
+            catch (IOException)
+            {
+
+                 new Timer(o => WriteLine(text), null, 10, 0);
             }
         }
     }
